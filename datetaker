@@ -1,0 +1,77 @@
+import tkinter as tk
+from tkinter import messagebox
+import json
+import re
+
+# Function to validate time format
+def is_valid_time(time_string):
+    pattern = r"^\d{2}:\d{2}$"
+    if re.match(pattern, time_string):
+        try:
+            hour, minute = map(int, time_string.split(":"))
+            return 0 <= hour < 24 and 0 <= minute < 60
+        except ValueError:
+            return False
+    return False
+
+# Function to add timestamp to list
+def add_timestamp():
+    timestamp = entry.get()
+    if is_valid_time(timestamp):
+        timestamps.append(timestamp)
+        listbox.insert(tk.END, timestamp)
+        entry.delete(0, tk.END)
+    else:
+        messagebox.showerror("Invalid Time Format", "Please enter time in HH:MM format (e.g., 14:30)")
+
+# Function to save timestamps to JSON file with user-specified name
+def save_to_json():
+    filename = filename_entry.get().strip()
+    if not filename:
+        messagebox.showerror("Error", "Bitte einen Dateinamen für das Set angeben.")
+        return
+    if not filename.endswith(".json"):
+        filename += ".json"
+    with open(filename, 'w') as file:
+        json.dump(timestamps, file, indent=4)
+    messagebox.showinfo("Erfolg", f"Die eingegeben Zeiten wurden gespeichert als Set {filename}")
+
+# GUI Setup
+app = tk.Tk()
+app.title("Set Erstellen")
+app.geometry("300x500")
+
+# List to store timestamps
+timestamps = []
+
+# Input field for timestamps
+entry_label = tk.Label(app, text="Bitte Läutzeit angeben (HH:MM):")
+entry_label.pack(pady=5)
+
+entry = tk.Entry(app, width=10)
+entry.pack(pady=5)
+
+# Add button
+add_button = tk.Button(app, text="Läutzeit hinzufügen", command=add_timestamp)
+add_button.pack(pady=5)
+
+# Listbox to display timestamps
+listbox_label = tk.Label(app, text="Läutzeiten:")
+listbox_label.pack(pady=5)
+
+listbox = tk.Listbox(app, width=20, height=10)
+listbox.pack(pady=5)
+
+# Input field for file name
+filename_label = tk.Label(app, text="Bitte Set benennen:")
+filename_label.pack(pady=5)
+
+filename_entry = tk.Entry(app, width=20)
+filename_entry.pack(pady=5)
+
+# Save button
+save_button = tk.Button(app, text="Set abspeichern", command=save_to_json)
+save_button.pack(pady=20)
+
+# Run the GUI application
+app.mainloop()
