@@ -16,7 +16,7 @@ schedule_dict = {}
 # Function to load available JSON files in the current directory
 def load_available_files():
     global available_files
-    available_files = [f for f in os.listdir() if f.endswith('.json')]
+    available_files = [f for f in os.listdir() if f.endswith('.json') and not f.startswith('calendar_files_')]
     if available_files:
         file_var.set(available_files[0])
     else:
@@ -54,13 +54,23 @@ def set_default_schedule(date_str):
 def on_date_change(*args):
     selected_date = calendar.get_date()
     current_file = file_dict.get(selected_date, 'None')
-    current_schedule = schedule_dict.get(selected_date, set_default_schedule(selected_date))
+    current_schedule = []
+    # current_schedule = schedule_dict.get(selected_date, set_default_schedule(selected_date))
+    if current_file != 'None':
+        with open(current_file, "r") as f:
+            items = f.readlines()
+            for item in items:
+                print(item)
+                current_schedule.append(item.replace("\n", "").replace(",", "").replace(" ", ""))
+    else:
+        current_schedule = set_default_schedule(selected_date)
     update_current_selection(selected_date, current_file, current_schedule)
 
 # Function to update the current selection display
 def update_current_selection(selected_date, current_file, current_schedule):
-    current_selection_label.config(text=f"Momentan gewähltes Set für {selected_date}: {current_file}")
-    schedule_label.config(text=f"Momentane Läutzeiten: {', '.join(current_schedule)}")
+    current_selection_label.config(text=f"Momentan gewÃ¤hltes Set fÃ¼r {selected_date}: {current_file}")
+    # schedule_label.config(text=f"Momentane LÃ¤utzeiten: {', '.join(current_schedule)}")
+    schedule_label.config(text=f"Momentane LÃ¤utzeiten: {current_schedule}")
 
 # Function to handle file selection for a selected date
 def select_file():
@@ -69,7 +79,8 @@ def select_file():
     if selected_file:
         file_dict[selected_date_str] = selected_file
         display_selected_files()
-        update_current_selection(selected_date_str, selected_file, schedule_dict.get(selected_date_str, set_default_schedule(selected_date_str)))
+        update_current_selection(selected_date_str, selected_file, schedule_dict.get(selected_date_str))
+        # update_current_selection(selected_date_str, selected_file, schedule_dict.get(selected_date_str, set_default_schedule(selected_date_str)))
 
 # Function to display selected files in the listbox
 def display_selected_files():
@@ -112,7 +123,7 @@ def refresh_data():
 # GUI Setup
 app = tk.Tk()
 app.title("Kalender-Applikation")
-app.geometry("600x400")
+app.geometry("600x750")
 
 # Calendar widget
 calendar = Calendar(app, selectmode='day', date_pattern='yyyy-mm-dd')
@@ -132,7 +143,7 @@ file_dropdown = tk.OptionMenu(app, file_var, *available_files)
 file_dropdown.pack(pady=10)
 
 # Select file button
-select_file_button = tk.Button(app, text="Set für das gewählte Datum festlegen", command=select_file)
+select_file_button = tk.Button(app, text="Set fÃ¼r das gewÃ¤hlte Datum festlegen", command=select_file)
 select_file_button.pack(pady=10)
 
 # Update button
@@ -140,15 +151,15 @@ update_button = tk.Button(app, text="Kalender updaten", command=refresh_data)
 update_button.pack(pady=10)
 
 # Label to display current file selection for the selected date
-current_selection_label = tk.Label(app, text="Momentan eingetragenes Set für das gewählte Datum: None")
+current_selection_label = tk.Label(app, text="Momentan eingetragenes Set fÃ¼r das gewÃ¤hlte Datum: None")
 current_selection_label.pack(pady=10)
 
 # Label to display current schedule for the selected date
-schedule_label = tk.Label(app, text="Momentane Läutzeiten: None")
+schedule_label = tk.Label(app, text="Momentane LÃ¤utzeiten: None")
 schedule_label.pack(pady=10)
 
 # Listbox to display selected files
-listbox_label = tk.Label(app, text="Gewählte Sets:")
+listbox_label = tk.Label(app, text="GewÃ¤hlte Sets:")
 listbox_label.pack(pady=5)
 
 listbox = tk.Listbox(app, width=80, height=10)

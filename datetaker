@@ -28,7 +28,7 @@ def add_timestamp():
 def save_to_json():
     filename = filename_entry.get().strip()
     if not filename:
-        messagebox.showerror("Error", "Bitte einen Dateinamen für das Set angeben.")
+        messagebox.showerror("Error", "Bitte einen Dateinamen fÃ¼r das Set angeben.")
         return
     if not filename.endswith(".json"):
         filename += ".json"
@@ -45,18 +45,18 @@ app.geometry("300x500")
 timestamps = []
 
 # Input field for timestamps
-entry_label = tk.Label(app, text="Bitte Läutzeit angeben (HH:MM):")
+entry_label = tk.Label(app, text="Bitte LÃ¤utzeit angeben (HH:MM):")
 entry_label.pack(pady=5)
 
 entry = tk.Entry(app, width=10)
 entry.pack(pady=5)
 
 # Add button
-add_button = tk.Button(app, text="Läutzeit hinzufügen", command=add_timestamp)
+add_button = tk.Button(app, text="LÃ¤utzeit hinzufÃ¼gen", command=add_timestamp)
 add_button.pack(pady=5)
 
 # Listbox to display timestamps
-listbox_label = tk.Label(app, text="Läutzeiten:")
+listbox_label = tk.Label(app, text="LÃ¤utzeiten:")
 listbox_label.pack(pady=5)
 
 listbox = tk.Listbox(app, width=20, height=10)
