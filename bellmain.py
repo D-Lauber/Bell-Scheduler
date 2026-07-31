@@ -1,75 +1,346 @@
-import schedule
-import time
-#from playsound import playsound
+import tkinter as tk
+from tkinter import ttk, messagebox
+import subprocess
+import sys
+import os
+import signal
 
-# Function to ring the alarm
-def ring_alarm():
-    print("Time to ring the alarm!")
-    # Replace 'alarm_sound.mp3' with the path to your sound file
-    print('alarm_sound.mp3')
+scheduler_process = None
 
-# Function to set up a custom schedule with specific days and times
-def set_custom_schedule():
-    times = []
-    days = []
-    print("Enter up to 3 times for this schedule in 24-hour format (e.g., 09:00). Type 'done' to finish.")
-    for i in range(1, 4):
-        user_time = input(f"Enter time {i} (or type 'done' to finish): ")
-        if user_time.lower() == 'done':
-            break
-        try:
-            # Validate time format
-            time.strptime(user_time, "%H:%M")
-            times.append(user_time)
-        except ValueError:
-            print("Invalid time format. Please enter in HH:MM format.")
-            continue
-    
-    print("Enter the days of the week you want this schedule to apply (e.g., Monday, Tuesday). Type 'done' to finish.")
-    while True:
-        user_day = input("Enter day (or type 'done' to finish): ").capitalize()
-        if user_day.lower() == 'done':
-            break
-        elif user_day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
-            days.append(user_day)
+PLANNER_SCRIPT = "scheduletaker.py"
+SETS_SCRIPT = "datetaker.py"
+SCHEDULER_SCRIPT = "bellringer.py"
+MODIFIER_SCRIPT = "datemodifier.py"
+
+PID_FILE = "scheduler.pid"
+
+
+# =====================================================
+# Anwendungen starten
+# =====================================================
+
+def open_planner():
+    try:
+        subprocess.Popen(
+            [sys.executable, PLANNER_SCRIPT]
+        )
+
+        status_var.set(
+            "Glockenplaner gestartet"
+        )
+
+    except Exception as e:
+        messagebox.showerror(
+            "Fehler",
+            str(e)
+        )
+
+
+def open_sets():
+    try:
+        subprocess.Popen(
+            [sys.executable, SETS_SCRIPT]
+        )
+
+        status_var.set(
+            "Set-Erstellung gestartet"
+        )
+
+    except Exception as e:
+        messagebox.showerror(
+            "Fehler",
+            str(e)
+        )
+
+def open_modifier():
+    try:
+        subprocess.Popen(
+            [sys.executable, MODIFIER_SCRIPT]
+        )
+
+        status_var.set(
+            "Set-Bearbeitung gestartet"
+        )
+
+    except Exception as e:
+        messagebox.showerror(
+            "Fehler",
+            str(e)
+        )
+
+# =====================================================
+# Scheduler
+# =====================================================
+
+def scheduler_running():
+
+    if not os.path.exists(PID_FILE):
+        return False
+
+    try:
+
+        with open(PID_FILE, "r") as f:
+            pid = int(f.read().strip())
+
+        os.kill(pid, 0)
+
+        return True
+
+    except Exception:
+        return False
+
+
+def start_scheduler():
+    global scheduler_process
+
+    if scheduler_process and scheduler_process.poll() is None:
+        scheduler_status_var.set("🟢 Läuft bereits")
+        return
+
+    scheduler_process = subprocess.Popen(
+        [sys.executable, SCHEDULER_SCRIPT]
+    )
+
+    scheduler_status_var.set("🟢 Läuft")
+
+
+def stop_scheduler():
+
+    global scheduler_process
+
+    if scheduler_process and scheduler_process.poll() is None:
+
+        scheduler_process.terminate()
+
+        scheduler_status_var.set("🔴 Gestoppt")
+
+
+def update_scheduler_status():
+
+    if scheduler_process is not None:
+
+        if scheduler_process.poll() is None:
+            scheduler_status_var.set("🟢 Läuft")
         else:
-            print("Invalid day. Please enter a valid day of the week (e.g., Monday).")
-    
-    return times, days
+            scheduler_status_var.set("🔴 Gestoppt")
 
-# Function to apply a schedule based on provided times and days
-def apply_schedule(times, days):
-    for day in days:
-        for alarm_time in times:
-            # Schedule alarms for the specific days and times
-            getattr(schedule.every(), day.lower()).at(alarm_time).do(ring_alarm)
-            print(f"Alarm set for {day} at {alarm_time}.")
-
-# Function to choose the schedule and times
-def choose_schedule():
-    print("Choose your schedule:")
-    print("1. Custom Schedule 1")
-    print("2. Custom Schedule 2")
-    choice = input("Enter 1 or 2: ")
-    if choice == '1':
-        print("Custom Schedule 1 selected.")
-        schedule_one_times, schedule_one_days = set_custom_schedule()
-        apply_schedule(schedule_one_times, schedule_one_days)
-    elif choice == '2':
-        print("Custom Schedule 2 selected.")
-        schedule_two_times, schedule_two_days = set_custom_schedule()
-        apply_schedule(schedule_two_times, schedule_two_days)
     else:
-        print("Invalid choice. Please restart and select a valid option.")
-        exit()
+        scheduler_status_var.set("🔴 Gestoppt")
 
-# Main function
-def main():
-    choose_schedule()
-    # Main loop to keep the scheduler running
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    app.after(1000, update_scheduler_status)
 
-if __name__ == "__main__":
-    main()
+
+# =====================================================
+# GUI
+# =====================================================
+
+app = tk.Tk()
+
+app.title("🔔 Glockenverwaltung")
+
+app.geometry("650x500")
+
+app.configure(bg="#f4f6f9")
+
+# -------------------------
+
+style = ttk.Style()
+
+style.theme_use("clam")
+
+style.configure(
+    ".",
+    background="#f4f6f9",
+    foreground="#2c3e50",
+    font=("Segoe UI", 10)
+)
+
+style.configure(
+    "Card.TFrame",
+    background="#ffffff"
+)
+
+style.configure(
+    "Title.TLabel",
+    background="#ffffff",
+    foreground="#1f4e78",
+    font=("Segoe UI", 18, "bold")
+)
+
+style.configure(
+    "Info.TLabel",
+    background="#ffffff",
+    foreground="#2c3e50"
+)
+
+style.configure(
+    "Launcher.TButton",
+    font=("Segoe UI", 11, "bold")
+)
+
+# =====================================================
+# Hauptbereich
+# =====================================================
+
+main_frame = ttk.Frame(
+    app,
+    padding=20,
+    style="Card.TFrame"
+)
+
+main_frame.pack(
+    fill="both",
+    expand=True,
+    padx=20,
+    pady=20
+)
+
+title_label = ttk.Label(
+    main_frame,
+    text="🔔 Glockenverwaltung",
+    style="Title.TLabel"
+)
+
+title_label.pack(
+    pady=(10, 20)
+)
+
+# =====================================================
+# Tools
+# =====================================================
+
+tools_frame = ttk.LabelFrame(
+    main_frame,
+    text="Werkzeuge",
+    padding=15
+)
+
+tools_frame.pack(
+    fill="x",
+    pady=(0, 20)
+)
+
+planner_button = ttk.Button(
+    tools_frame,
+    text="📅 Läut-Sets zuweisen",
+    command=open_planner,
+    width=30
+)
+
+planner_button.pack(
+    pady=5
+)
+
+sets_button = ttk.Button(
+    tools_frame,
+    text="➕ Läut-Set erstellen",
+    command=open_sets,
+    width=30
+)
+
+sets_button.pack(
+    pady=5
+)
+
+modifier_button = ttk.Button(
+    tools_frame,
+    text="🔧 Läut-Set bearbeiten",
+    command=open_modifier,
+    width=30
+)
+
+modifier_button.pack(
+    pady=5
+)
+
+# =====================================================
+# Scheduler
+# =====================================================
+
+scheduler_frame = ttk.LabelFrame(
+    main_frame,
+    text="Automatischer Scheduler",
+    padding=15
+)
+
+scheduler_frame.pack(
+    fill="x"
+)
+
+ttk.Label(
+    scheduler_frame,
+    text="Status:"
+).pack()
+
+scheduler_status_var = tk.StringVar()
+
+scheduler_label = ttk.Label(
+    scheduler_frame,
+    textvariable=scheduler_status_var,
+    font=("Segoe UI", 12, "bold")
+)
+
+scheduler_label.pack(
+    pady=10
+)
+
+scheduler_button_frame = ttk.Frame(
+    scheduler_frame
+)
+
+scheduler_button_frame.pack()
+
+start_button = ttk.Button(
+    scheduler_button_frame,
+    text="▶ Starten",
+    command=start_scheduler,
+    width=15
+)
+
+start_button.pack(
+    side="left",
+    padx=5
+)
+
+stop_button = ttk.Button(
+    scheduler_button_frame,
+    text="⏹ Stoppen",
+    command=stop_scheduler,
+    width=15
+)
+
+stop_button.pack(
+    side="left",
+    padx=5
+)
+
+# =====================================================
+# Statusleiste
+# =====================================================
+
+status_var = tk.StringVar()
+
+status_var.set("Bereit")
+
+status_bar = tk.Label(
+    app,
+    textvariable=status_var,
+    bg="#1f4e78",
+    fg="white",
+    anchor="w",
+    padx=10,
+    pady=5
+)
+
+status_bar.pack(
+    side="bottom",
+    fill="x"
+)
+
+# =====================================================
+# Statusüberwachung starten
+# =====================================================
+
+update_scheduler_status()
+
+app.mainloop()
