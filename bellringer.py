@@ -21,10 +21,15 @@ def get_monthly_filename(year, month):
 # Function to ring the alarm
 def ring_alarm():
     print("Time to ring the alarm!")
-    # relay.on()
-    sleep(20)
-    # relay.off()
+    relay.on()
+    sleep(1)
+    relay.off()
 
+    sleep(9)
+
+    relay.on()
+    sleep(1)
+    relay.off()
 
 # Function to read timestamps from the associated file
 def read_timestamps(file_path):
@@ -155,6 +160,6 @@ def main():
 
 if __name__ == "__main__":
 
-    # relay = LED(17)
+    relay = LED(17)
 
     main()
