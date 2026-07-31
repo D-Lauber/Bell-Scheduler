@@ -10,6 +10,8 @@ from time import sleep
 default_weekday_schedule = ["09:00", "12:00", "15:00"]
 default_sunday_schedule = ["10:00", "14:00"]
 
+BASE_DIR = "Sets"
+RELOAD_FILE = "bellringer.reload"
 
 # Function to get the monthly JSON filename
 def get_monthly_filename(year, month):
@@ -19,9 +21,9 @@ def get_monthly_filename(year, month):
 # Function to ring the alarm
 def ring_alarm():
     print("Time to ring the alarm!")
-    relay.on()
+    # relay.on()
     sleep(20)
-    relay.off()
+    # relay.off()
 
 
 # Function to read timestamps from the associated file
@@ -75,9 +77,11 @@ def setup_schedule():
         # Check if there is a file associated with today's date
         if today_str in calendar_data:
 
-            file_path = calendar_data[today_str]
+            relative_path = calendar_data[today_str]
+            file_path = os.path.join(BASE_DIR, relative_path)
 
-            if os.path.exists(file_path):
+            if os.path.isfile(file_path):
+                print(f"Lade Läutplan: {file_path}")
                 timestamps = read_timestamps(file_path)
                 print("Loaded timestamps:", timestamps)
 
@@ -100,7 +104,18 @@ def setup_schedule():
             print(f"Invalid timestamp format: {alarm_time}")
             print(e)
 
+def check_for_reload():
 
+    if os.path.exists(RELOAD_FILE):
+
+        print("Reload requested")
+
+        try:
+            os.remove(RELOAD_FILE)
+        except:
+            pass
+
+        setup_schedule()
 
 # Function to set default schedule based on weekday
 def set_default_schedule(date_str):
@@ -133,12 +148,13 @@ def main():
 
     while True:
         schedule.run_pending()
+        check_for_reload()
         time.sleep(1)
 
 
 
 if __name__ == "__main__":
 
-    relay = LED(17)
+    # relay = LED(17)
 
     main()
